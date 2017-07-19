@@ -60,6 +60,32 @@ def amcep(x, np.ndarray[np.float64_t, ndim=1, mode="c"] b not None,
     prederr = _amcep(x, &b[0], order, alpha, lambda_coef, step, tau, pd, eps)
     return prederr
 
+def dtw(np.ndarray[np.float64_t, ndim=1, mode="c"] x not None,
+		np.ndarray[np.float64_t, ndim=1, mode="c"] y not None,
+		num_test, num_ref, dim=25, path_type=5, norm_type=2):
+    if not path_type in range(1, 8):
+        raise ValueError("unsupported path_type: %d, must be in 1:7" % path_type)
+    if not norm_type in range(1, 3):
+        raise ValueError("unsupported norm_type: %d, must be in 1:2" % norm_type)
+    if (path_type in range(3, 5)) and (num_ref > num_test):
+        raise ValueError("under path_type 3:4: the number of reference vectors must be less than test vectors !")
+    if (path_type in range(5, 8)) and (num_ref//2 >= num_test):
+        raise ValueError("under path_type 5:7: the number of reference vectors must be less than the twice of the test vectors !")
+    if (path_type in range(5, 8)) and (num_test//2 >= num_ref):
+        raise ValueError("under path_type 5:7: the number of test vectors must be less than the twice of the reference vectors !")
+    cdef int out_addr
+    cdef int outviterbi_addr
+    cdef long length
+    cdef int ret
+    ret=_dtw(&x[0], &y[0], num_test, num_ref, dim, path_type, norm_type,&out_addr,&outviterbi_addr,&length)
+    if ret ==1:
+        raise RuntimeError("failed to compute dtw; error occured in dtw_init")
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"]out
+    cdef np.ndarray[int, ndim=1,mode="c"] viterbi_path
+    out=np.empty(length*dim*2,dtype=np.float64)
+    viterbi_path=np.empty(length*2,dtype=np.int32)
+    _dtw_result(&out[0],&viterbi_path[0],out_addr,outviterbi_addr,length,dim)
+    return out,viterbi_path
 
 ### Mel-generalized cepstrum analysis ###
 

@@ -31,8 +31,8 @@ cdef extern from "SPTK.h":
     double _amcep "amcep"(double x, double *b, const int m, const double a,
                           const double lambda_coef, const double step, const double tau,
                           const int pd, const double eps);
-
-
+    int _dtw "dtw"(double *x, double *y, int num_test, int num_ref, int dim, int path_type, int norm_typed, int *out_addr,int *outviterbi_addr,long *length)
+    int _dtw_result "dtw_result"(double *out, int *viterbi_path, int out_addr, int outviterbi_addr, long length, int dim)
     # Mel-generalized cepstrum analysis
     int _mcep "mcep"(double *xw, const int flng, double *mc, const int m, const double a,
                      const int itr1, const int itr2, const double dd, const int etype,

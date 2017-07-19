@@ -349,7 +349,20 @@ def amcep(x, b, alpha=0.35, lambda_coef=0.98, step=0.1, tau=0.9, pd=4, eps=1.0e-
     """
     return _sptk.amcep(x, b, alpha, lambda_coef, step, tau, pd, eps)
 
-
+def dtw(x,y,path_type=5, norm_type=2):
+    dim=x.shape[1]
+    num_ref=x.shape[0]
+    num_test=y.shape[0]
+    x=x.reshape(x.shape[0]*x.shape[1])
+    y=y.reshape(y.shape[0]*y.shape[1])
+    out,viterbi= _sptk.dtw(x,y,num_test,num_ref,dim,path_type,norm_type)
+    out=out.reshape(out.shape[0]//dim,dim)
+    out_x=out[0::2,:]
+    out_y=out[1::2,:]
+    viterbi=np.expand_dims(viterbi,axis=1)
+    viterbi_x=viterbi[0::2,:]
+    viterbi_y=viterbi[1::2,:]
+    return out_x,out_y,viterbi_x,viterbi_y
 ### Mel-generalized cepstrum analysis ###
 
 @apply_along_last_axis
