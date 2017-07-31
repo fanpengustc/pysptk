@@ -48,15 +48,19 @@ rapt_src = [
     join(src_bin_top, "pitch", "snack", "sigproc.c"),
 ]
 
+hts_api_src=[
+    join(src_bin_top,"vc","hts_engine_API","HTS_misc.c"),
+    join(src_bin_top,"vc","hts_engine_API","HTS_pstream.c"),
+    join(src_bin_top,"vc","hts_engine_API","HTS_sstream.c"),
+]
 sptklib_src = glob(join(src_top, "lib", "*.c"))
 sptk_src = glob(join(src_bin_top, "*", "_*.c"))
 
 # collect all sources
-sptk_all_src = sptk_src + sptklib_src + swipe_src + rapt_src
+sptk_all_src = sptk_src + sptklib_src + swipe_src + rapt_src + hts_api_src
 
 # Filter ignore list
-ignore_bin_list = [join(src_bin_top, "wavjoin"), join(src_bin_top, "wavsplit"),
-                   join(src_bin_top, "vc")]
+ignore_bin_list = [join(src_bin_top, "wavjoin"), join(src_bin_top, "wavsplit")]
 for ignore in ignore_bin_list:
     sptk_all_src = list(
         filter(lambda s: not s.startswith(ignore), sptk_all_src))

@@ -59,7 +59,39 @@ def amcep(x, np.ndarray[np.float64_t, ndim=1, mode="c"] b not None,
     cdef double prederr
     prederr = _amcep(x, &b[0], order, alpha, lambda_coef, step, tau, pd, eps)
     return prederr
+	
+def gmm_train(np.ndarray[np.float64_t, ndim=1, mode="c"] dat not None,
+              np.ndarray[int, ndim=1, mode="c"] dim_list not None,
+              L,M,T,cov_dim,S=1,Imin=0,Imax=20,
+		      E=0.00001,V=0.001,W=0.001):
+    if dim_list.sum() != L:
+        raise ValueError("the sum of blocksize must be coincided with dimension of vector L")
+    cdef int ret
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"]out_weight
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"]out_mean
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"]out_cov
+    out_weight=np.empty(M,dtype=np.float64)
+    out_mean=np.empty(M*L,dtype=np.float64)
+    out_cov=np.empty(M*L*L,dtype=np.float64)
 
+    ret=_gmm_train(&dat[0],&dim_list[0],L,M,T,cov_dim,S,Imin,Imax,E,V ,W,&out_weight[0],&out_mean[0],&out_cov[0])
+    if ret!=0:
+        pass
+        raise RuntimeError("failed to train the gmm_model")
+    return out_weight,out_mean,out_cov
+def vc_run(np.ndarray[np.float64_t, ndim=1, mode="c"] source not None,
+       np.ndarray[np.float64_t, ndim=1, mode="c"] gmm_weight not None,
+       np.ndarray[np.float64_t, ndim=1, mode="c"] gmm_mean not None,
+       np.ndarray[np.float64_t, ndim=1, mode="c"] gmm_cov not None,
+       np.ndarray[np.float64_t, ndim=1, mode="c"] gv_mean_in not None,
+       np.ndarray[np.float64_t, ndim=1, mode="c"] gv_vari_in not None,
+       source_vlen,target_vlen,total_frame,num_mix,delta_order,gv_flag,FLOOR):
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"]target
+    target=np.empty(target_vlen*total_frame,dtype=np.float64)
+
+    _vc_run(&source[0],&gmm_weight[0],&gmm_mean[0],&gmm_cov[0],&gv_mean_in[0],&gv_vari_in[0], source_vlen, target_vlen, total_frame, num_mix, delta_order, gv_flag, FLOOR, &target[0])
+    return target
+    
 def dtw(np.ndarray[np.float64_t, ndim=1, mode="c"] x not None,
 		np.ndarray[np.float64_t, ndim=1, mode="c"] y not None,
 		num_test, num_ref, dim=25, path_type=5, norm_type=2):
@@ -77,6 +109,7 @@ def dtw(np.ndarray[np.float64_t, ndim=1, mode="c"] x not None,
     cdef int outviterbi_addr
     cdef long length
     cdef int ret
+
     ret=_dtw(&x[0], &y[0], num_test, num_ref, dim, path_type, norm_type,&out_addr,&outviterbi_addr,&length)
     if ret ==1:
         raise RuntimeError("failed to compute dtw; error occured in dtw_init")

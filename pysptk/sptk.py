@@ -350,11 +350,13 @@ def amcep(x, b, alpha=0.35, lambda_coef=0.98, step=0.1, tau=0.9, pd=4, eps=1.0e-
     return _sptk.amcep(x, b, alpha, lambda_coef, step, tau, pd, eps)
 
 def dtw(x,y,path_type=5, norm_type=2):
+    x=x.copy()
+    y=y.copy()
     dim=x.shape[1]
-    num_ref=x.shape[0]
-    num_test=y.shape[0]
-    x=x.reshape(x.shape[0]*x.shape[1])
-    y=y.reshape(y.shape[0]*y.shape[1])
+    num_test=x.shape[0]
+    num_ref=y.shape[0]
+    x=x.reshape(x.size)
+    y=y.reshape(y.size)
     out,viterbi= _sptk.dtw(x,y,num_test,num_ref,dim,path_type,norm_type)
     out=out.reshape(out.shape[0]//dim,dim)
     out_x=out[0::2,:]
@@ -363,6 +365,42 @@ def dtw(x,y,path_type=5, norm_type=2):
     viterbi_x=viterbi[0::2,:]
     viterbi_y=viterbi[1::2,:]
     return out_x,out_y,viterbi_x,viterbi_y
+
+def gmm_train(dat,dim_list,M,S=1,Imin=0,Imax=20,E=0.00001,V=0.001,W=0.001):
+    dat=dat.copy()
+    dim_list=dim_list.copy()
+    T=dat.shape[0]
+    L=dat.shape[1]
+    cov_dim=dim_list.size
+    dim_list=dim_list.reshape(dim_list.size)
+    dat=dat.reshape(dat.size)
+    weight,mean,cov=_sptk.gmm_train(dat,dim_list,L,M,T,cov_dim,S,Imin,Imax,E,V,W)
+    weight=np.expand_dims(weight,axis=1)
+    mean=mean.reshape(M,L)
+    cov=cov.reshape(M,L*L)
+    return weight,mean,cov
+
+def vc(source,gmm_weight,gmm_mean,gmm_cov,gv_mean_in,gv_vari_in,delta_order=2,gv_flag=1,FLOOR=0.0):
+    source=source.copy()
+    gmm_weight=gmm_weight.copy()
+    gmm_mean=gmm_mean.copy()
+    gmm_cov=gmm_cov.copy()
+    gv_mean_in=gv_mean_in.copy()
+    gv_vari_in=gv_vari_in.copy()
+    source_vlen=source.shape[1]
+    target_vlen=source_vlen
+    total_frame=source.shape[0]    
+    num_mix=gmm_weight.size
+    source=source.reshape(source.size)
+    gmm_weight=gmm_weight.reshape(gmm_weight.size)
+    gmm_mean=gmm_mean.reshape(gmm_mean.size)
+    gmm_cov=gmm_cov.reshape(gmm_cov.size)
+    gv_mean_in=gv_mean_in.reshape(gv_mean_in.size)
+    gv_vari_in=gv_vari_in.reshape(gv_vari_in.size)
+    target=_sptk.vc_run(source,gmm_weight,gmm_mean,gmm_cov,gv_mean_in,gv_vari_in,source_vlen,target_vlen,total_frame,num_mix,delta_order,gv_flag,FLOOR)
+    target=target.reshape(total_frame,target_vlen)
+    return target
+
 ### Mel-generalized cepstrum analysis ###
 
 @apply_along_last_axis
